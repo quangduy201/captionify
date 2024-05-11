@@ -1,100 +1,74 @@
-import pickle
+import statistics
 
-import tensorflow as tf
-import keras
-import numpy as np
-import matplotlib.pyplot as plt
-
-from utils import *
+import torch
+import torch.nn as nn
+import torchvision.models as models
 
 
-def load_inception_v3():
-    """Loads the InceptionV3 model with weights pre-trained on ImageNet, excluding the top layers."""
-    inception_v3 = tf.keras.applications.InceptionV3(
-        weights='imagenet',
-        include_top=False)
-    inception_v3.trainable = False
+class EncoderCNN(nn.Module):
+    def __init__(self, embed_size, train_cnn=False):
+        super(EncoderCNN, self).__init__()
+        self.train_cnn = train_cnn
+        self.inception = models.inception_v3(weights=models.Inception_V3_Weights.DEFAULT)
+        # self.inception = models.inception_v3(pretrained=True, aux_logits=False)
+        self.inception.fc = nn.Linear(self.inception.fc.in_features, embed_size)
+        self.relu = nn.ReLU()
+        # self.times = []
+        self.dropout = nn.Dropout(0.5)
+        # self.pool = nn.AdaptiveMaxPool2d((1, 1))
 
-    # # Reshape the output to be suitable for the Transformer encoder
-    # output = inception_v3.output
-    # output = tf.keras.layers.Reshape((299, 299, 3))(output)
-    #
-    # inception_v3 = tf.keras.models.Model(inputs=inception_v3.input, outputs=output)
-    return inception_v3
-
-
-def mobilenet_v3():
-    """Loads the MobileNetV3Large model with weights pre-trained on ImageNet, excluding the top layers."""
-    mobilenet = tf.keras.applications.MobileNetV3Large(
-        input_shape=IMAGE_SHAPE,
-        include_top=False,
-        include_preprocessing=True)
-    mobilenet.trainable = False
-
-    return mobilenet
+    def forward(self, images):
+        features = self.inception(images)
+        if type(features) is models.inception.InceptionOutputs:
+            features, _ = features
+        # features, _ = self.inception(images)
+        # features = self.pool(features)
+        features = features.view(features.size(0), -1)
+        return self.dropout(self.relu(features))
 
 
-class Vocabulary:
-    def __init__(self, file_path):
-        self.vocabulary = self.load_vocabulary(file_path)
-        self.word2idx = {word: idx for idx, word in enumerate(self.vocabulary)}
-        self.idx2word = {idx: word for word, idx in self.word2idx.items()}
-        self.vocab_size = len(self.vocabulary)
+class DecoderRNN(nn.Module):
+    def __init__(self, embed_size, hidden_size, vocab_size, num_layers):
+        super(DecoderRNN, self).__init__()
+        self.embed = nn.Embedding(vocab_size, embed_size)
+        self.lstm = nn.LSTM(embed_size, hidden_size, num_layers)
+        self.linear = nn.Linear(hidden_size, vocab_size)
+        self.dropout = nn.Dropout(0.5)
 
-    def load_vocabulary(self, file_path):
-        # Load vocabulary from the file path
-        vocabulary = pickle.load(open(file_path, 'rb'))
-        return vocabulary
-
-    def tokenize_text(self, text):
-        # Tokenize the text
-        tokens = text.split()
-        token_ids = [self.word2idx.get(token, self.word2idx['<unk>']) for token in tokens]
-        return token_ids
-
-    def lookup_word(self, index):
-        # Look up the word by index
-        return self.idx2word.get(index, '<unk>')
+    def forward(self, features, captions):
+        embeddings = self.dropout(self.embed(captions))
+        embeddings = torch.cat((features.unsqueeze(0), embeddings), dim=0)
+        hiddens, _ = self.lstm(embeddings)
+        outputs = self.linear(hiddens)
+        return outputs
 
 
-class CNNEncoder:
-    def __init__(self, model):
-        self.model = model
+class ImageCaptioningModel(nn.Module):
+    def __init__(self, embed_size, hidden_size, vocab_size, num_layers):
+        super(ImageCaptioningModel, self).__init__()
+        self.encoderCNN = EncoderCNN(embed_size)
+        self.decoderRNN = DecoderRNN(embed_size, hidden_size, vocab_size, num_layers)
 
-    def preprocess_image(self, image):
-        # Preprocess image
-        image = tf.image.resize(image, (299, 299))
-        image = self.model.preprocess_input(image)
+    def forward(self, images, captions):
+        features = self.encoderCNN(images)
+        outputs = self.decoderRNN(features, captions)
+        return outputs
 
+    def caption_image(self, image, vocabulary, max_length=50):
+        result_caption = []
 
-class TransformerEncoderLayer(tf.keras.layers.Layer):
-    def __init__(self, embed_dim, num_heads):
-        super().__init__()
-        self.layer_norm_1 = tf.keras.layers.LayerNormalization()
-        self.attention = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
-        self.dense = tf.keras.layers.Dense(embed_dim, activation="relu")
+        with torch.no_grad():
+            x = self.encoderCNN(image).unsqueeze(0)
+            states = None
 
-    def call(self, x, training=False):
-        x = self.layer_norm_1(x)
-        x = self.dense(x)
-        attn_output = self.attention(query=x, value=x, key=x, attention_mask=None, training=training)
-        x = x + attn_output
-        return x
+            for _ in range(max_length):
+                hiddens, states = self.decoderRNN.lstm(x, states)
+                output = self.decoderRNN.linear(hiddens.squeeze(0))
+                predicted = output.argmax(1)
+                result_caption.append(predicted.item())
+                x = self.decoderRNN.embed(predicted).unsqueeze(0)
 
+                if vocabulary.index_to_word[predicted.item()] == "<EOS>":
+                    break
 
-class Embeddings(tf.keras.layers.Layer):
-
-    def __init__(self, vocab_size, embed_dim, max_len):
-        super().__init__()
-        self.token_embeddings = keras.layers.Embedding(vocab_size, embed_dim)
-        self.position_embeddings = keras.layers.Embedding(max_len, embed_dim, input_shape=(None, max_len))
-
-    def call(self, input_ids):
-        length = tf.shape(input_ids)[-1]
-        position_ids = tf.range(start=0, limit=length, delta=1)
-        position_ids = tf.expand_dims(position_ids, axis=0)
-
-        token_embeddings = self.token_embeddings(input_ids)
-        position_embeddings = self.position_embeddings(position_ids)
-
-        return token_embeddings + position_embeddings
+        return [vocabulary.index_to_word[idx] for idx in result_caption]
