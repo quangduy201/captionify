@@ -1,55 +1,49 @@
-import collections
-import pathlib
-
-import tensorflow as tf
-
-from model import load_inception_v3
-
-# Constants
-IMAGE_SHAPE = (224, 224, 3)
-MAX_CAPTION_LENGTH = 50
-VOCABULARY_SIZE = 5000
-BATCH_SIZE = 64
-BUFFER_SIZE = 10000
-EMBEDDING_SIZE = 128
-UNITS = 128
+import torch
+import torchvision.transforms as transforms
+from PIL import Image
 
 
-def preprocess_image(image_path):
-    image = tf.io.read_file(image_path)  # load image from disk
-    image = tf.io.decode_jpeg(image, channels=3)  # load as tensor
-    image = tf.keras.layers.Resizing(299, 299)(image)  # resize
-    image = tf.cast(image, tf.float32) / 255.0  # normalize
-    return image
+def print_examples(model, device, dataset):
+    transform = transforms.Compose(
+        [
+            transforms.Resize((299, 299)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ]
+    )
+
+    model.eval()
+    test_img1 = transform(Image.open("../../resources/test_images/dog.jpg").convert("RGB")).unsqueeze(0)
+    print("Example 1 CORRECT: Dog on a beach by the ocean")
+    print("Example 1 OUTPUT: " + " ".join(model.caption_image(test_img1.to(device), dataset.vocab)))
+
+    test_img2 = transform(Image.open("../../resources/test_images/child.jpg").convert("RGB")).unsqueeze(0)
+    print("Example 2 CORRECT: Child holding red frisbee outdoors")
+    print("Example 2 OUTPUT: " + " ".join(model.caption_image(test_img2.to(device), dataset.vocab)))
+
+    test_img3 = transform(Image.open("../../resources/test_images/bus.png").convert("RGB")).unsqueeze(0)
+    print("Example 3 CORRECT: Bus driving by parked cars")
+    print("Example 3 OUTPUT: " + " ".join(model.caption_image(test_img3.to(device), dataset.vocab)))
+
+    test_img4 = transform(Image.open("../../resources/test_images/boat.png").convert("RGB")).unsqueeze(0)
+    print("Example 4 CORRECT: A small boat in the ocean")
+    print("Example 4 OUTPUT: " + " ".join(model.caption_image(test_img4.to(device), dataset.vocab)))
+
+    test_img5 = transform(Image.open("../../resources/test_images/horse.png").convert("RGB")).unsqueeze(0)
+    print("Example 5 CORRECT: A cowboy riding a horse in the desert")
+    print("Example 5 OUTPUT: " + " ".join(model.caption_image(test_img5.to(device), dataset.vocab)))
+
+    model.train()
 
 
-def extract_features(image_path, model):
-    image = preprocess_image(image_path)
-    image = tf.expand_dims(image, axis=0)  # batch axis
-    features = model(image)
-    return image, features
+def save_checkpoint(state, filename="../../resources/checkpoint.pth.tar"):
+    print("=> Saving checkpoint")
+    torch.save(state, filename)
 
 
-def preprocess_caption(caption):
-    pass
-
-
-def load_trained_model(model_path):
-    model = tf.keras.models.load_model(model_path)
-    return model
-
-
-def generate_caption(image_path, model, word_to_index_map):
-    # Preprocess the image
-    preprocessed_image = preprocess_image(image_path)
-    image_feature = tf.expand_dims(preprocessed_image, axis=0)
-
-    # Generate caption using the LSTM decoder
-    caption = model.predict(image_feature)[0]
-    predicted_caption = ''
-    for word_index in caption:
-        if word_index != 0:  # Skip padding (0)
-            predicted_caption += word_to_index_map[word_index] + ' '
-    predicted_caption = predicted_caption.strip()
-
-    return predicted_caption
+def load_checkpoint(checkpoint, model, optimizer):
+    print("=> Loading checkpoint")
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+    step = checkpoint["step"]
+    return step
