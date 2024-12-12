@@ -2,6 +2,7 @@ import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
 
+from PIL import Image
 from application.cnn.get_loader import get_loader
 from application.cnn.model import ImageCaptioningModel
 from application.cnn.utils import load_checkpoint, print_examples
@@ -50,4 +51,6 @@ if __name__ == "__main__":
         step = load_checkpoint(torch.load("../../resources/checkpoint.pth.tar", map_location=torch.device('cpu')), model, optimizer)
     model.eval()
 
-    print_examples(model, device, dataset)
+    test_img1 = transform(Image.open("../../resources/test_images/dog.jpg").convert("RGB")).unsqueeze(0)
+    print("Example 1 CORRECT: Dog on a beach by the ocean")
+    print("Example 1 OUTPUT: " + " ".join(model.caption_image(test_img1.to(device), dataset.vocab)))

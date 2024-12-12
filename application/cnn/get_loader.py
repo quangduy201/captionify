@@ -13,7 +13,7 @@ from PIL import Image
 # 3. Setup padding of every batch (all examples should be of same seq_len and setup dataloader)
 # Note that loading the image is very easy compared to the text!
 
-# Download with: python -m spacy download en
+# Download with: python -m spacy download en_core_web_sm
 spacy_english = spacy.load("en_core_web_sm")
 
 
