@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     try:
         import spacy
         spacy.load("en_core_web_sm")
-    except RuntimeError:
+    except IOError:
         print("🟡 Downloading en_core_web_sm...")
         from spacy.cli import download
         download("en_core_web_sm")

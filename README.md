@@ -1,26 +1,25 @@
-# Image Captioning Web App
+# Captionify - An AI Image Caption Generator
 
-This is a simple **image captioning web application** powered by a deep learning
-model trained on datasets like **Flickr8k**. Users can upload an image, and the
-model will generate a natural language description of the image.
+**Captionify** is a simple web application that generates English captions from images using a deep learning model.
+It combines a **FastAPI backend** (for model inference) and a responsive **HTML/CSS/JS frontend**.
 
-> The project uses a **FastAPI backend** (with PyTorch model inference) and a responsive **HTML/CSS/JS frontend**.
+> The model is trained on datasets like **Flickr8k** with a **CNN + RNN architecture**.
 
 ## Features
 
-- Upload any image by drag-and-dropping or browsing files
-- Generate English captions using a trained neural network
-- Live typing effect for displaying generated captions
-- Trained on Flickr8k dataset with CNN+RNN architecture
-- `POST /reload-model` route to reload the latest model from Kaggle without restarting
+- Upload images drag & drop or file browser.
+- Generate descriptive English captions from your images.
+- Live typing effect for generated captions.
+- Trained on Flickr8k dataset with a custom PyTorch model.
+- API endpoint `POST /reload-model` to dynamically reload the latest model from Kaggle.
 
 
 ## Setup
 
 ### 1. Clone the repository:
 ```shell
-git clone https://github.com/quangduy201/image_captioning.git
-cd image_captioning
+git clone https://github.com/quangduy201/captionify.git
+cd captionify
 ```
 
 ### 2. Create and activate a virtual environment:
@@ -46,8 +45,8 @@ uvicorn run:app --reload
 ```
 
 This will:
-- Automatically download the latest model from [`quangduy201/image-captioning/pyTorch/checkpoint`](https://www.kaggle.com/models/quangduy201/image-captioning) Kaggle Models
-- Load model + vocabulary into memory
+- Automatically download the latest model from [`Kaggle Model Hub`](https://www.kaggle.com/models/quangduy201/image-captioning).
+- Load model + vocabulary into memory.
 - Start FastAPI on [`http://localhost:8000`](http://localhost:8000)
 
 
@@ -55,9 +54,9 @@ This will:
 Open a web browser and go to [`http://localhost:8000`](http://localhost:8000) to access the application.
 
 
-## Train custom model
+## Train your own model
 
-If you want to train a custom image-captioning model, you can use the provided Kaggle notebook [here](https://www.kaggle.com/code/quangduy201/image-captioning-pytorch)
+You can train a custom captioning model using the provided Kaggle notebook [here](https://www.kaggle.com/code/quangduy201/image-captioning-pytorch)
 ### 1. Open the notebook:
 Visit the provided Kaggle link and create a copy of the notebook.
 

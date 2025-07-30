@@ -33,9 +33,14 @@ body {
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.container > p {
+  font-style: italic;
+  margin-top: 0.2rem;
   margin-bottom: 1rem;
-  text-align: center;
 }
 
 /* FLEX CONTAINER FOR CONTENT */
@@ -49,7 +54,6 @@ h1 {
 /* UPLOAD BOX */
 .upload-box {
   position: relative;
-  /* border: 2px dashed #d1d5db; */
   border: 2px dashed #3b82f6;
   border-radius: 8px;
   background-color: #f3f4f6;
