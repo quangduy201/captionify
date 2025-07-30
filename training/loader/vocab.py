@@ -1,9 +1,6 @@
 from typing import List
 
-import spacy
-
-# Download with: python -m spacy download en_core_web_sm
-spacy_english = spacy.load("en_core_web_sm")
+from app.utils.spacy_utils import get_spacy_model
 
 
 class Vocabulary:
@@ -17,7 +14,7 @@ class Vocabulary:
 
     @staticmethod
     def tokenizer_eng(text):
-        return [token.text.lower() for token in spacy_english.tokenizer(text)]
+        return [token.text.lower() for token in get_spacy_model().tokenizer(text)]
 
     def build_vocabulary(self, sentence_list: List[str]) -> None:
         frequencies = {}
