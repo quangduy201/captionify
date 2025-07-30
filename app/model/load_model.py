@@ -5,13 +5,24 @@ import torch
 import pickle
 
 from app import globals
+from app.core.config import MODEL_ID, MODEL_CACHE_DIR
 from training.model.model import ImageCaptioningModel
 
 
 def load_model_and_vocab_from_kaggle(force_download=False):
     print("🟡 Downloading model from Kaggle...")
     try:
-        path = kagglehub.model_download("quangduy201/image-captioning/pyTorch/checkpoint", force_download=force_download)
+        if force_download or not os.path.exists(MODEL_CACHE_DIR):
+            path = kagglehub.model_download(MODEL_ID, force_download=force_download)
+        else:
+            version_numbers = [
+                int(d.name) for d in MODEL_CACHE_DIR.iterdir()
+                if d.is_dir() and d.name.isdigit()
+            ]
+
+            version = max(version_numbers)
+            path = MODEL_CACHE_DIR / str(version)
+
         checkpoint_path = os.path.join(path, "checkpoint.pth.tar")
         vocab_path = os.path.join(path, "vocabulary.pkl")
 
