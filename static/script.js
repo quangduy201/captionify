@@ -9,7 +9,7 @@ const removeBtn = document.getElementById("removeBtn");
 const startBtn = document.getElementById("startBtn");
 const captionTextarea = document.getElementById("caption");
 
-let selectedFile = null; // lưu file đã chọn
+let selectedFile = null;
 
 browseText.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -73,8 +73,6 @@ startBtn.addEventListener("click", async () => {
     if (!response.ok) throw new Error("Response error.");
 
     const data = await response.json();
-    console.log(data);
-    console.log(data.caption);
     showTypingEffect(data.caption);
   } catch (err) {
     captionTextarea.value = "Error: " + err.message;
