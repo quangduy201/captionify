@@ -5,18 +5,12 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.endpoints import router
 from app.model.load_model import load_model_and_vocab_from_kaggle
+from app.utils.spacy_utils import get_spacy_model
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        import spacy
-        spacy.load("en_core_web_sm")
-    except IOError:
-        print("🟡 Downloading en_core_web_sm...")
-        from spacy.cli import download
-        download("en_core_web_sm")
-
+    get_spacy_model()
     load_model_and_vocab_from_kaggle()
     yield
     print("🛑 App is shutting down...")

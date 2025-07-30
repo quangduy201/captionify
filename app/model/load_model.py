@@ -9,7 +9,7 @@ from training.model.model import ImageCaptioningModel
 
 
 def load_model_and_vocab_from_kaggle(force_download=False):
-    print("🔄 Downloading model from Kaggle...")
+    print("🟡 Downloading model from Kaggle...")
     try:
         path = kagglehub.model_download("quangduy201/image-captioning/pyTorch/checkpoint", force_download=force_download)
         checkpoint_path = os.path.join(path, "checkpoint.pth.tar")
