@@ -65,7 +65,7 @@ startBtn.addEventListener("click", async () => {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    const response = await fetch("http://captionify-app.onrender.com/upload", {
+    const response = await fetch("https://captionify-app.onrender.com/upload", {
       method: "POST",
       body: formData,
     });
