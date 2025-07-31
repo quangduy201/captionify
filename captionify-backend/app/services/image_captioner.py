@@ -4,7 +4,6 @@ import torch
 import torchvision.transforms as transforms
 from PIL import Image
 
-import app
 from app import globals
 from app.model.load_model import load_model_and_vocab_from_kaggle
 from app.utils.text import normalize_caption
@@ -44,7 +43,7 @@ def postprocess_caption(tokens: list[str]) -> str:
 def generate_caption(file: BinaryIO) -> str:
     image_tensor = preprocess_image(file)
 
-    if not hasattr(app.globals, "model") or not hasattr(app.globals, "vocab"):
+    if not hasattr(globals, "model") or not hasattr(globals, "vocab"):
         load_model_and_vocab_from_kaggle()
 
     tokens = globals.model.caption_image_beam_search(image_tensor, globals.vocab)
