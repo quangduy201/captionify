@@ -14,6 +14,8 @@ def load_model_and_vocab_from_kaggle(force_download=False):
     try:
         if force_download or not os.path.exists(MODEL_CACHE_DIR):
             path = kagglehub.model_download(MODEL_ID, force_download=force_download)
+        elif hasattr(globals, "model") and hasattr(globals, "vocab"):
+            return True
         else:
             version_numbers = [
                 int(d.name) for d in MODEL_CACHE_DIR.iterdir()

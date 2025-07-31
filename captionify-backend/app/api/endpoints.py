@@ -1,5 +1,7 @@
+import gc
+
 from fastapi import APIRouter, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from app.model.load_model import load_model_and_vocab_from_kaggle
 from app.services.image_captioner import generate_caption
@@ -7,8 +9,9 @@ from app.services.image_captioner import generate_caption
 router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
-def serve_frontend():
-    return FileResponse("static/index.html")
+def root():
+    gc.collect()
+    return JSONResponse(status_code=200, content={"message": "Hello World!"})
 
 
 @router.post("/upload")
