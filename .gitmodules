@@ -1,0 +1,3 @@
+[submodule "captionify-backend"]
+	path = captionify-backend
+	url = git@hf.co:spaces/quangduy201/captionify
